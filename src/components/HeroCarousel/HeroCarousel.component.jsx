@@ -1,10 +1,13 @@
-import React from "react";
+import React,{useState,useEffect} from "react";
 import HeroSlider from "react-slick";
+import axios from "axios";
 
 //Components
 import {NextArrow,PrevArrow} from "./Arrows.components";
 
 const HeroCarousel = () =>{
+
+    
 
     const settingsLg ={
         arrows:true,
