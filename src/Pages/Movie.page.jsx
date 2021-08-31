@@ -1,5 +1,8 @@
-import React from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { FaCcVisa, FaCcApplePay } from "react-icons/fa";
+import { useParams } from "react-router";
+import axios from "axios";
+import Slider from "react-slick";
 
 //components
 import MovieHero from '../components/MovieHero/MovieHero.component';
@@ -9,8 +12,46 @@ import PosterSlider from "../components/PosterSlider/PosterSlider.component";
 //Config
 import TempPosters from "../Config/TempPosters.config";
 
+// context
+import { MovieContext } from "../Context/movie.context";
 
 const Movie = () => {
+
+    const { id } = useParams();
+    const { movie } = useContext(MovieContext);
+    const [cast, setCast] = useState([]);
+    const [similarMovies, setSimilarMovies] = useState([]);
+    const [recommended, setRecommended] = useState([]);
+
+    useEffect(() => {
+        const requestCast = async () => {
+            const getCast = await axios.get(`/movie/${id}/credits`);
+            setCast(getCast.data.cast);
+        };
+        requestCast();
+    }, [id]);
+
+    useEffect(() => {
+        const requestSimilarMovies = async () => {
+          const getSimilarMovies = await axios.get(`/movie/${id}/similar`);
+          setSimilarMovies(getSimilarMovies.data.results);
+        };
+    
+        requestSimilarMovies();
+      }, [id]);
+    
+      useEffect(() => {
+        const requestRecommendedMovies = async () => {
+          const getRecommendedMovies = await axios.get(
+            `/movie/${id}/recommendations`
+          );
+          setRecommended(getRecommendedMovies.data.results);
+        };
+    
+        requestRecommendedMovies();
+      }, [id]);
+
+
     const settings = {
         infinite: false,
         speed: 500,
@@ -44,6 +85,39 @@ const Movie = () => {
         ],
     };
 
+    const settingsCast = {
+        infinite: false,
+        speed: 500,
+        slidesToShow: 6,
+        slidesToScroll: 4,
+        initialSlide: 0,
+        responsive: [
+          {
+            breakpoint: 1024,
+            settings: {
+              slidesToShow: 4,
+              slidesToScroll: 3,
+              infinite: true,
+            },
+          },
+          {
+            breakpoint: 600,
+            settings: {
+              slidesToShow: 5,
+              slidesToScroll: 2,
+              initialSlide: 2,
+            },
+          },
+          {
+            breakpoint: 480,
+            settings: {
+              slidesToShow: 2,
+              slidesToScroll: 1,
+            },
+          },
+        ],
+      };
+
     return (
         <>
             <MovieHero />
@@ -51,10 +125,7 @@ const Movie = () => {
                 <div className="flex flex-col gap-3 items-start">
                     <h2 className="text-gray-800 font-bold text-2xl">About the movie</h2>
                     <p>
-                        Language is not a barrier at BookMyShow.
-                        We speak and understand the language of cinema.
-                        So, if English movie is what you are into, we keep you up-to-date about all the new and now showing Hollywood movies near your location.
-                        Check out all the current movies and book your tickets then and there.
+                        {movie.overview}
                     </p>
                 </div>
                 <div className="my-8">
@@ -88,23 +159,17 @@ const Movie = () => {
                 </div>
                 <div className="my-8">
                     <h2 className="text-gray-800 font-bold text-2xl mb-4">Cast and Crew</h2>
-                    <div className="flex flex-wrap gap-4">
-                        <Cast
-                            image="https://hips.hearstapps.com/esquireuk.cdnds.net/15/37/original/original-henry-cavill-43-jpg-3efbd12a.jpg"
-                            castName="Ben Affleck"
-                            role="Batman"
-                        />
-                        <Cast
-                            image="https://hips.hearstapps.com/esquireuk.cdnds.net/15/37/original/original-henry-cavill-43-jpg-3efbd12a.jpg"
-                            castName="Henry Cavil"
-                            role="Superman"
-                        />
-                        <Cast
-                            image="https://hips.hearstapps.com/esquireuk.cdnds.net/15/37/original/original-henry-cavill-43-jpg-3efbd12a.jpg"
-                            castName="Gal Gadot"
-                            role="Wonder woman"
-                        />
-                    </div>
+                    
+                        <Slider {...settingsCast}>
+                        {cast.map((castdata) => (
+                            <Cast
+                                image={`https://image.tmdb.org/t/p/original/${castdata.profile_path}`}
+                                castName={castdata.original_name}
+                                role={castdata.character}
+                            />
+                        ))}
+                        </Slider>
+                    
                 </div>
                 <div className="my-8">
                     <hr />
@@ -112,7 +177,7 @@ const Movie = () => {
                 <div className="my-8">
                     <PosterSlider
                         config={settings}
-                        images={TempPosters}
+                        images={similarMovies}
                         title="You might also like"
                         isDark={false} />
                 </div>
@@ -122,7 +187,7 @@ const Movie = () => {
                 <div className="my-8">
                     <PosterSlider
                         config={settings}
-                        images={TempPosters}
+                        images={recommended}
                         title="BMS XCLSIVE"
                         isDark={false} />
                 </div>
